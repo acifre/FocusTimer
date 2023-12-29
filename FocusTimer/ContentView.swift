@@ -4,18 +4,14 @@
 //
 //  Created by Anthony Cifre on 12/29/23.
 //
-
 import SwiftUI
 
 struct ContentView: View {
+    // Initialize PomodoroTimer with a 25 minutes countdown
+    @StateObject private var pomodoroTimer = PomodoroTimer(totalTime: 25 * 60)
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
+        TimerView(pomodoroTimer: pomodoroTimer)
     }
 }
 
