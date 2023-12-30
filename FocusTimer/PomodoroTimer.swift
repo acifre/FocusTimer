@@ -4,29 +4,82 @@
 //
 //  Created by Anthony Cifre on 12/29/23.
 //
-
 import Foundation
 
 class PomodoroTimer: ObservableObject {
-    @Published var timeRemaining: Int
-    let totalTime: Int
+    enum SessionType {
+        case pomodoro
+        case shortBreak
+        case longBreak
+    }
 
-    init(totalTime: Int) {
-        self.totalTime = totalTime
-        self.timeRemaining = totalTime
+    @Published var timeRemaining: Int
+    var timer: Timer?
+    var sessionType: SessionType
+    var completedPomodoros: Int
+
+    init() {
+        self.sessionType = .pomodoro
+        self.completedPomodoros = 0
+        self.timeRemaining = 25 * 60  // Directly initializing with Pomodoro duration
     }
 
     func startTimer() {
-        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
-            if self.timeRemaining > 0 {
-                self.timeRemaining -= 1
+        timer?.invalidate()
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            guard let strongSelf = self else { return }
+
+            if strongSelf.timeRemaining > 0 {
+                strongSelf.timeRemaining -= 1
             } else {
-                timer.invalidate()
+                strongSelf.timer?.invalidate()
+                strongSelf.moveToNextSession()
             }
         }
     }
 
+    func pauseTimer() {
+        timer?.invalidate()
+    }
+
     func resetTimer() {
-        self.timeRemaining = totalTime
+        timer?.invalidate()
+        sessionType = .pomodoro
+        completedPomodoros = 0
+        timeRemaining = duration(for: .pomodoro)
+    }
+
+    func moveToNextSession() {
+        switch sessionType {
+        case .pomodoro:
+            completedPomodoros += 1
+            sessionType = completedPomodoros % 4 == 0 ? .longBreak : .shortBreak
+        case .shortBreak, .longBreak:
+            sessionType = .pomodoro
+        }
+        timeRemaining = duration(for: sessionType)
+    }
+
+    func duration(for session: SessionType) -> Int {
+        switch session {
+        case .pomodoro:
+            return 25 * 60  // 25 minutes
+        case .shortBreak:
+            return 5 * 60   // 5 minutes
+        case .longBreak:
+            return 15 * 60  // 15 minutes
+        }
+    }
+
+    func timeFormatted() -> String {
+        let minutes = timeRemaining / 60
+        let seconds = timeRemaining % 60
+        return String(format: "%02d:%02d", minutes, seconds)
+    }
+
+    func skipToNextSession() {
+        timer?.invalidate()
+        moveToNextSession()
+        startTimer()
     }
 }
