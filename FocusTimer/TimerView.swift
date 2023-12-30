@@ -11,31 +11,32 @@ struct TimerView: View {
     @ObservedObject var pomodoroTimer: PomodoroTimer
 
     var body: some View {
-        VStack {
-            Text(pomodoroTimer.timeFormatted())
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .padding()
-                .animation(.easeInOut, value: pomodoroTimer.timeRemaining)
+        ZStack {
+            ProgressCircleView(progress: progress)
+                .frame(width: 200, height: 200)
 
-            Text(currentSessionText())
-                .font(.headline)
+            VStack {
+                Text(pomodoroTimer.timeFormatted())
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .padding()
 
-            HStack {
-                Button("Start") {
-                    pomodoroTimer.startTimer()
+                HStack {
+                    Button("Start") {
+                        pomodoroTimer.startTimer()
+                    }
+                    Button("Pause") {
+                        pomodoroTimer.pauseTimer()
+                    }
+                    Button("Reset") {
+                        pomodoroTimer.resetTimer()
+                    }
+                    Button("Skip") {
+                        pomodoroTimer.skipToNextSession()
+                    }
                 }
-                Button("Pause") {
-                    pomodoroTimer.pauseTimer()
-                }
-                Button("Reset") {
-                    pomodoroTimer.resetTimer()
-                }
-                Button("Skip") {
-                    pomodoroTimer.skipToNextSession()
-                }
+                    .padding()
             }
-                .padding()
         }
     }
 
@@ -48,6 +49,12 @@ struct TimerView: View {
         case .longBreak:
             return "Long Break"
         }
+    }
+
+    private var progress: CGFloat {
+        let totalDuration = CGFloat(pomodoroTimer.duration(for: pomodoroTimer.sessionType))
+        let remaining = CGFloat(pomodoroTimer.timeRemaining)
+        return 1.0 - (remaining / totalDuration)
     }
 }
 

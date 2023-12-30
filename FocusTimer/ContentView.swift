@@ -11,12 +11,9 @@ struct ContentView: View {
     @StateObject private var pomodoroTimer = PomodoroTimer()
 
     var body: some View {
-        SequenceProgressView(pomodoroTimer: pomodoroTimer)
-                        .padding()
-                        .animation(.easeInOut, value: pomodoroTimer.completedPomodoros)
-        TimerView(pomodoroTimer: pomodoroTimer)
+            TimerView(pomodoroTimer: pomodoroTimer)
+        }
     }
-}
 
 #Preview {
     ContentView()

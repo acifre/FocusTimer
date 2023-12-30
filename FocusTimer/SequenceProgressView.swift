@@ -18,14 +18,11 @@ struct SequenceProgressView: View {
 
             HStack {
                 ForEach(0..<4, id: \.self) { index in
-                    Image(systemName: index < pomodoroTimer.completedPomodoros ? "circle.fill" : "circle")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
+                    ProgressCircleView(progress: progressForCircle(at: index))
                         .frame(width: 20, height: 20)
                 }
             }
-            .padding()
-            .transition(.scale)
+                .padding()
         }
     }
 
@@ -37,6 +34,18 @@ struct SequenceProgressView: View {
             return "Short Break"
         case .longBreak:
             return "Long Break"
+        }
+    }
+
+    private func progressForCircle(at index: Int) -> CGFloat {
+        if index < pomodoroTimer.completedPomodoros {
+            return 1.0 // Full circle for completed Pomodoros
+        } else if index == pomodoroTimer.completedPomodoros && pomodoroTimer.sessionType == .pomodoro {
+            let totalDuration = CGFloat(pomodoroTimer.duration(for: .pomodoro))
+            let remaining = CGFloat(pomodoroTimer.timeRemaining)
+            return 1.0 - (remaining / totalDuration) // Partial circle for current Pomodoro
+        } else {
+            return 0.0 // Empty circle for future Pomodoros
         }
     }
 }
