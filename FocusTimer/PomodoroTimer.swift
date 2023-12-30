@@ -14,9 +14,11 @@ class PomodoroTimer: ObservableObject {
     }
 
     @Published var timeRemaining: Int
+    @Published var isTimerRunning = false
+    @Published var completedPomodoros: Int
+
     var timer: Timer?
     var sessionType: SessionType
-    var completedPomodoros: Int
 
     init() {
         self.sessionType = .pomodoro
@@ -24,37 +26,51 @@ class PomodoroTimer: ObservableObject {
         self.timeRemaining = 25 * 60 // Directly initializing with Pomodoro duration
     }
 
-    func startTimer() {
-        timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            guard let strongSelf = self else { return }
-
-            if strongSelf.timeRemaining > 0 {
-                strongSelf.timeRemaining -= 1
-            } else {
-                strongSelf.timer?.invalidate()
-                strongSelf.moveToNextSession()
+    func toggleTimer() {
+        if isTimerRunning {
+            // Pause the timer
+            timer?.invalidate()
+            timer = nil
+            isTimerRunning = false
+        } else {
+            // Start the timer
+            timer?.invalidate() // Safeguard to invalidate any existing timer
+            timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+                guard let strongSelf = self else { return }
+                if strongSelf.timeRemaining > 0 {
+                    strongSelf.timeRemaining -= 1
+                } else {
+                    strongSelf.timer?.invalidate()
+                    strongSelf.moveToNextSession()
+                }
             }
+            isTimerRunning = true
         }
     }
 
-    func pauseTimer() {
-        timer?.invalidate()
-    }
-
-    func resetTimer() {
-        timer?.invalidate()
-        sessionType = .pomodoro
+    func resetSequence() {
         completedPomodoros = 0
+        sessionType = .pomodoro
         timeRemaining = duration(for: .pomodoro)
+        isTimerRunning = false
+        timer?.invalidate()
+        timer = nil
     }
 
     func moveToNextSession() {
         if sessionType == .pomodoro {
             completedPomodoros += 1
-            sessionType = completedPomodoros % 4 == 0 ? .longBreak : .shortBreak
+            if completedPomodoros >= 4 {
+                sessionType = .longBreak
+            } else {
+                sessionType = .shortBreak
+            }
         } else {
-            sessionType = .pomodoro
+            if completedPomodoros >= 4 && sessionType == .longBreak {
+                resetSequence()
+            } else {
+                sessionType = .pomodoro
+            }
         }
         timeRemaining = duration(for: sessionType)
     }
@@ -77,28 +93,43 @@ class PomodoroTimer: ObservableObject {
     }
 
     func skipToNextSession() {
+        let wasRunning = isTimerRunning
         timer?.invalidate()
-        moveToNextSession()
-        startTimer()
+        timer = nil
+        isTimerRunning = false
+
+        if completedPomodoros >= 3 && sessionType == .longBreak {
+            resetSequence()
+        } else {
+            moveToNextSession()
+        }
+
+        if wasRunning {
+            toggleTimer() // Restart the timer if it was running
+        }
     }
 
     func rewindToPreviousSession() {
+        let wasRunning = isTimerRunning
         timer?.invalidate()
+        timer = nil
+        isTimerRunning = false
 
-        if sessionType == .pomodoro && completedPomodoros > 0 {
-            if completedPomodoros % 4 == 0 {
-                // Rewind from the start of a Pomodoro session to the long break
-                sessionType = .longBreak
-            } else {
-                // Rewind from the start of a Pomodoro session to the short break
-                sessionType = .shortBreak
+        if sessionType == .pomodoro {
+            if completedPomodoros > 0 {
+                // If in the middle of a Pomodoro, go back to the previous break
+                completedPomodoros -= 1
+                sessionType = completedPomodoros % 4 == 0 ? .shortBreak : .longBreak
             }
-            completedPomodoros -= 1
-        } else if sessionType == .shortBreak || sessionType == .longBreak {
-            // Rewind from a break to the previous Pomodoro session
+        } else {
+            // If in a break, go back to the previous Pomodoro
             sessionType = .pomodoro
         }
 
         timeRemaining = duration(for: sessionType)
+
+        if wasRunning {
+            toggleTimer() // Restart the timer if it was running
+        }
     }
 }
