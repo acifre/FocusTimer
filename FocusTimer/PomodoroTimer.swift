@@ -82,4 +82,24 @@ class PomodoroTimer: ObservableObject {
         moveToNextSession()
         startTimer()
     }
+
+    func rewindToPreviousSession() {
+            timer?.invalidate()
+
+            if sessionType == .pomodoro && completedPomodoros > 0 {
+                if completedPomodoros % 4 == 0 {
+                    // Rewind from the start of a Pomodoro session to the long break
+                    sessionType = .longBreak
+                } else {
+                    // Rewind from the start of a Pomodoro session to the short break
+                    sessionType = .shortBreak
+                }
+                completedPomodoros -= 1
+            } else if sessionType == .shortBreak || sessionType == .longBreak {
+                // Rewind from a break to the previous Pomodoro session
+                sessionType = .pomodoro
+            }
+
+            timeRemaining = duration(for: sessionType)
+        }
 }

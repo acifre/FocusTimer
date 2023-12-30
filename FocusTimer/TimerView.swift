@@ -34,6 +34,9 @@ struct TimerView: View {
                     Button("Skip") {
                         pomodoroTimer.skipToNextSession()
                     }
+                    Button("Rewind") {
+                        pomodoroTimer.rewindToPreviousSession()
+                    }
                 }
                     .padding()
             }
