@@ -87,8 +87,10 @@ struct TimerView: View {
         switch pomodoroTimer.sessionType {
         case .pomodoro:
             return pomodoroTimer.completedPomodoros >= 3 ? "Finish" : "Break"
-        case .shortBreak, .longBreak:
+        case .shortBreak:
             return "Focus"
+        case .longBreak:
+            return "Another round?"
         }
     }
 

@@ -28,19 +28,39 @@ class PomodoroTimer: ObservableObject {
     init() {
         self.sessionType = .pomodoro
         self.completedPomodoros = 0
-        self.timeRemaining = 1 * 60 // Directly initializing with Pomodoro duration
+        self.timeRemaining = 25 * 60 // Directly initializing with Pomodoro duration
     }
 
     func applicationDidEnterBackground() {
         backgroundEntryTime = Date()
-        scheduleRemainingNotifications()
+        cancelScheduledNotification() // Cancel current session notification
+        scheduleRemainingNotifications() // Schedule notifications for the remaining sequence
     }
 
     func applicationWillEnterForeground() {
-        if let backgroundEntryTime = backgroundEntryTime {
-            let timeInBackground = Date().timeIntervalSince(backgroundEntryTime)
-            adjustTimerForBackgroundElapsedTime(timeInBackground)
-            self.backgroundEntryTime = nil // Reset the background entry time
+        guard let backgroundEntryTime = backgroundEntryTime else { return }
+        let totalElapsedTime = Date().timeIntervalSince(backgroundEntryTime)
+
+        adjustTimerAndSession(forElapsedTime: totalElapsedTime)
+    }
+
+    private func adjustTimerAndSession(forElapsedTime elapsed: TimeInterval) {
+        var remainingTime = elapsed
+        while remainingTime > 0 && completedPomodoros < 4 {
+            let sessionDuration = Double(duration(for: sessionType))
+            if remainingTime < sessionDuration {
+                timeRemaining = Int(sessionDuration - remainingTime)
+                break
+            } else {
+                moveToNextSession()
+                remainingTime -= sessionDuration
+            }
+        }
+
+        if completedPomodoros >= 4 {
+            resetSequence()
+        } else if isTimerRunning {
+            startTimer()
         }
     }
 
@@ -62,11 +82,11 @@ class PomodoroTimer: ObservableObject {
     func duration(for session: SessionType) -> Int {
         switch session {
         case .pomodoro:
-            return 1 * 60 // 25 minutes
+            return 25 * 60 // 25 minutes
         case .shortBreak:
-            return 1 * 60 // 5 minutes
+            return 5 * 60 // 5 minutes
         case .longBreak:
-            return 1 * 60 // 15 minutes
+            return 15 * 60 // 15 minutes
         }
     }
 
@@ -176,35 +196,36 @@ class PomodoroTimer: ObservableObject {
     }
 
     private func scheduleCurrentSessionNotification() {
-            let sessionEndTime = Date().addingTimeInterval(Double(timeRemaining))
-            scheduleNotification(for: sessionType, at: sessionEndTime)
-        }
+        let sessionEndTime = Date().addingTimeInterval(Double(timeRemaining))
+        scheduleNotification(for: sessionType, at: sessionEndTime)
+    }
 
     private func scheduleRemainingNotifications() {
-        let currentSessionEndTime = backgroundEntryTime?.addingTimeInterval(Double(timeRemaining))
-        var nextSessionTime = currentSessionEndTime
-        var sessionsLeft = 4 - completedPomodoros
+            var nextSessionEndTime = backgroundEntryTime?.addingTimeInterval(Double(timeRemaining))
+            var nextSessionType = sessionType
+            var sessionsLeft = 4 - completedPomodoros
 
-        while sessionsLeft > 0 {
-            guard let nextSessionStart = nextSessionTime else { break }
+            while sessionsLeft > 0 {
+                guard let endTime = nextSessionEndTime else { break }
 
-            // Determine next session type
-            let nextSessionType = sessionType == .pomodoro ? SessionType.shortBreak : SessionType.pomodoro
-            let nextSessionDuration = duration(for: nextSessionType)
+                scheduleNotification(for: nextSessionType, at: endTime)
 
-            // Schedule notification for next session end
-            scheduleNotification(for: nextSessionType, at: nextSessionStart.addingTimeInterval(Double(nextSessionDuration)))
+                // Check if this is the final session
+                if sessionsLeft == 1 && nextSessionType == .pomodoro {
+                    let finalBreakType = SessionType.longBreak
+                    let finalBreakDuration = duration(for: finalBreakType)
+                    let finalBreakEndTime = endTime.addingTimeInterval(Double(finalBreakDuration))
+                    scheduleFinalNotification(at: finalBreakEndTime)
+                    break  // Exit after scheduling the final notification
+                }
 
-            // Prepare for next iteration
-            nextSessionTime = nextSessionStart.addingTimeInterval(Double(nextSessionDuration))
-            sessionsLeft -= 1
+                // Prepare for the next session
+                nextSessionType = nextSessionType == .pomodoro ? .shortBreak : .pomodoro
+                let nextSessionDuration = duration(for: nextSessionType)
+                nextSessionEndTime = endTime.addingTimeInterval(Double(nextSessionDuration))
+                sessionsLeft -= (nextSessionType == .pomodoro) ? 1 : 0
+            }
         }
-
-        // Schedule final notification if all sessions are completed
-        if sessionsLeft == 0, let finalTime = nextSessionTime {
-            scheduleFinalNotification(at: finalTime)
-        }
-    }
 
     private func scheduleFinalNotification(at date: Date) {
         let content = UNMutableNotificationContent()
