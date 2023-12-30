@@ -14,8 +14,9 @@ struct TimerView: View {
         VStack {
             // Timer and Progress Circle
             ZStack {
-                ProgressCircleView(progress: progress)
+                ProgressCircleView(progress: progress, isTimerRunning: $pomodoroTimer.isTimerRunning)
                     .frame(width: 250, height: 250)
+
                 VStack {
                     Text(pomodoroTimer.timeFormatted())
                         .font(.largeTitle)
@@ -25,7 +26,7 @@ struct TimerView: View {
                         .padding(.vertical, 5)
                 }
             }
-            .padding()
+                .padding()
 
             // Pomodoro Session Indicators
             HStack(spacing: 5) {
