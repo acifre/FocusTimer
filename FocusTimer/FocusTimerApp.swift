@@ -9,6 +9,9 @@ import SwiftUI
 
 @main
 struct FocusTimerApp: App {
+    @Environment(\.scenePhase) var scenePhase
+    @StateObject var pomodoroTimer = PomodoroTimer()
+
     init() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
             if granted {
@@ -27,6 +30,17 @@ struct FocusTimerApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(pomodoroTimer)
+                .onChange(of: scenePhase) {
+                    switch scenePhase {
+                    case .background:
+                        pomodoroTimer.applicationDidEnterBackground()
+                    case .active:
+                        pomodoroTimer.applicationWillEnterForeground()
+                    default:
+                        break
+                    }
+                }
                 .preferredColorScheme(.dark)
         }
     }

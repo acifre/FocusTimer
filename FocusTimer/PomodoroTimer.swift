@@ -23,10 +23,34 @@ class PomodoroTimer: ObservableObject {
     var timer: Timer?
     var sessionType: SessionType
 
+    var backgroundEntryTime: Date?
+
     init() {
         self.sessionType = .pomodoro
         self.completedPomodoros = 0
         self.timeRemaining = 1 * 60 // Directly initializing with Pomodoro duration
+    }
+
+    func applicationDidEnterBackground() {
+        backgroundEntryTime = Date()
+        scheduleRemainingNotifications()
+    }
+
+    func applicationWillEnterForeground() {
+        if let backgroundEntryTime = backgroundEntryTime {
+            let timeInBackground = Date().timeIntervalSince(backgroundEntryTime)
+            adjustTimerForBackgroundElapsedTime(timeInBackground)
+            self.backgroundEntryTime = nil // Reset the background entry time
+        }
+    }
+
+    private func adjustTimerForBackgroundElapsedTime(_ elapsed: TimeInterval) {
+        let elapsedTimeInSeconds = Int(elapsed)
+        timeRemaining -= elapsedTimeInSeconds
+
+        if timeRemaining <= 0 {
+            moveToNextSession()
+        }
     }
 
     func timeFormatted() -> String {
@@ -47,70 +71,70 @@ class PomodoroTimer: ObservableObject {
     }
 
     func toggleTimer() {
-            isTimerRunning ? stopTimer() : startTimer()
-        }
+        isTimerRunning ? stopTimer() : startTimer()
+    }
 
     private func startTimer() {
-            stopTimer() // Ensure no timer is already running
-            timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-                self?.updateTimer()
-            }
-            isTimerRunning = true
-            scheduleNotification()
+        stopTimer() // Ensure no timer is already running
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            self?.updateTimer()
         }
+        isTimerRunning = true
+        scheduleCurrentSessionNotification()
+    }
 
     private func stopTimer() {
-            timer?.invalidate()
-            timer = nil
-            isTimerRunning = false
-            cancelScheduledNotification()
-        }
+        timer?.invalidate()
+        timer = nil
+        isTimerRunning = false
+        cancelScheduledNotification()
+    }
 
     private func updateTimer() {
-            if timeRemaining > 0 {
-                timeRemaining -= 1
-            } else {
-                // stopTimer() // Stop the timer
-                moveToNextSession()
-                playSound()
-            }
+        if timeRemaining > 0 {
+            timeRemaining -= 1
+        } else {
+            // stopTimer() // Stop the timer
+            moveToNextSession()
+            playSound()
         }
+    }
 
     func moveToNextSession() {
-            transitionToNextSession()
-            timeRemaining = duration(for: sessionType)
-            if isTimerRunning {
-                startTimer()
-            }
+        transitionToNextSession()
+        timeRemaining = duration(for: sessionType)
+        if isTimerRunning {
+            startTimer()
         }
+    }
 
     private func transitionToNextSession() {
-            if sessionType == .pomodoro {
-                completedPomodoros += 1
-                sessionType = completedPomodoros % 4 == 0 ? .longBreak : .shortBreak
-            } else if completedPomodoros >= 4 && sessionType == .longBreak {
-                resetSequence()
-            } else {
-                sessionType = .pomodoro
-            }
-        }
-
-        func resetSequence() {
-            completedPomodoros = 0
+        if sessionType == .pomodoro {
+            completedPomodoros += 1
+            sessionType = completedPomodoros % 4 == 0 ? .longBreak : .shortBreak
+        } else if completedPomodoros >= 4 && sessionType == .longBreak {
+            resetSequence()
+        } else {
             sessionType = .pomodoro
-            timeRemaining = duration(for: .pomodoro)
-            stopTimer()
         }
+    }
 
-        func skipToNextSession() {
-            let wasRunning = isTimerRunning
-            stopTimer()
-            transitionToNextSession()
-            timeRemaining = duration(for: sessionType)
-            if wasRunning {
-                startTimer()
-            }
+    func resetSequence() {
+        completedPomodoros = 0
+        sessionType = .pomodoro
+        timeRemaining = duration(for: .pomodoro)
+        stopTimer()
+    }
+
+    func skipToNextSession() {
+        let wasRunning = isTimerRunning
+        stopTimer()
+        transitionToNextSession()
+        timeRemaining = duration(for: sessionType)
+        if wasRunning {
+            startTimer()
         }
+    }
 
     func rewindToPreviousSession() {
         let wasRunning = isTimerRunning
@@ -138,21 +162,68 @@ class PomodoroTimer: ObservableObject {
         }
     }
 
-    private func scheduleNotification() {
-            let content = UNMutableNotificationContent()
-            content.title = "Timer Finished"
-            content.body = "Your Pomodoro session has ended."
-            content.sound = UNNotificationSound.default
+    private func scheduleNotification(for sessionType: SessionType, at date: Date) {
+        let content = UNMutableNotificationContent()
+        content.title = sessionType == .pomodoro ? "Pomodoro Finished" : "Break Finished"
+        content.body = "Your \(sessionType == .pomodoro ? "Pomodoro" : "Break") session has ended."
+        content.sound = UNNotificationSound.default
 
-            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: Double(timeRemaining), repeats: false)
-            let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+        let triggerDate = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: triggerDate, repeats: false)
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
 
-            UNUserNotificationCenter.current().add(request)
+        UNUserNotificationCenter.current().add(request)
+    }
+
+    private func scheduleCurrentSessionNotification() {
+            let sessionEndTime = Date().addingTimeInterval(Double(timeRemaining))
+            scheduleNotification(for: sessionType, at: sessionEndTime)
         }
+
+    private func scheduleRemainingNotifications() {
+        let currentSessionEndTime = backgroundEntryTime?.addingTimeInterval(Double(timeRemaining))
+        var nextSessionTime = currentSessionEndTime
+        var sessionsLeft = 4 - completedPomodoros
+
+        while sessionsLeft > 0 {
+            guard let nextSessionStart = nextSessionTime else { break }
+
+            // Determine next session type
+            let nextSessionType = sessionType == .pomodoro ? SessionType.shortBreak : SessionType.pomodoro
+            let nextSessionDuration = duration(for: nextSessionType)
+
+            // Schedule notification for next session end
+            scheduleNotification(for: nextSessionType, at: nextSessionStart.addingTimeInterval(Double(nextSessionDuration)))
+
+            // Prepare for next iteration
+            nextSessionTime = nextSessionStart.addingTimeInterval(Double(nextSessionDuration))
+            sessionsLeft -= 1
+        }
+
+        // Schedule final notification if all sessions are completed
+        if sessionsLeft == 0, let finalTime = nextSessionTime {
+            scheduleFinalNotification(at: finalTime)
+        }
+    }
+
+    private func scheduleFinalNotification(at date: Date) {
+        let content = UNMutableNotificationContent()
+        content.title = "All Finished!"
+        content.body = "Well done! You've completed all your Pomodoro sessions."
+        content.sound = UNNotificationSound.default
+
+        let triggerDate = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: triggerDate, repeats: false)
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+
+        UNUserNotificationCenter.current().add(request)
+    }
+
+
 
     private func cancelScheduledNotification() {
-            UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
-        }
+        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+    }
 
     private func playSound() {
         let systemSoundID: SystemSoundID = 1005

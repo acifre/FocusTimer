@@ -8,7 +8,7 @@ import SwiftUI
 
 struct ContentView: View {
     // Initialize PomodoroTimer with a 25 minutes countdown
-    @StateObject private var pomodoroTimer = PomodoroTimer()
+    @EnvironmentObject var pomodoroTimer: PomodoroTimer
 
     var body: some View {
             TimerView(pomodoroTimer: pomodoroTimer)
