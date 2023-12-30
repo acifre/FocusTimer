@@ -21,7 +21,7 @@ class PomodoroTimer: ObservableObject {
     init() {
         self.sessionType = .pomodoro
         self.completedPomodoros = 0
-        self.timeRemaining = 25 * 60  // Directly initializing with Pomodoro duration
+        self.timeRemaining = 25 * 60 // Directly initializing with Pomodoro duration
     }
 
     func startTimer() {
@@ -50,11 +50,10 @@ class PomodoroTimer: ObservableObject {
     }
 
     func moveToNextSession() {
-        switch sessionType {
-        case .pomodoro:
+        if sessionType == .pomodoro {
             completedPomodoros += 1
             sessionType = completedPomodoros % 4 == 0 ? .longBreak : .shortBreak
-        case .shortBreak, .longBreak:
+        } else {
             sessionType = .pomodoro
         }
         timeRemaining = duration(for: sessionType)
@@ -63,11 +62,11 @@ class PomodoroTimer: ObservableObject {
     func duration(for session: SessionType) -> Int {
         switch session {
         case .pomodoro:
-            return 25 * 60  // 25 minutes
+            return 25 * 60 // 25 minutes
         case .shortBreak:
-            return 5 * 60   // 5 minutes
+            return 5 * 60 // 5 minutes
         case .longBreak:
-            return 15 * 60  // 15 minutes
+            return 15 * 60 // 15 minutes
         }
     }
 
@@ -84,22 +83,22 @@ class PomodoroTimer: ObservableObject {
     }
 
     func rewindToPreviousSession() {
-            timer?.invalidate()
+        timer?.invalidate()
 
-            if sessionType == .pomodoro && completedPomodoros > 0 {
-                if completedPomodoros % 4 == 0 {
-                    // Rewind from the start of a Pomodoro session to the long break
-                    sessionType = .longBreak
-                } else {
-                    // Rewind from the start of a Pomodoro session to the short break
-                    sessionType = .shortBreak
-                }
-                completedPomodoros -= 1
-            } else if sessionType == .shortBreak || sessionType == .longBreak {
-                // Rewind from a break to the previous Pomodoro session
-                sessionType = .pomodoro
+        if sessionType == .pomodoro && completedPomodoros > 0 {
+            if completedPomodoros % 4 == 0 {
+                // Rewind from the start of a Pomodoro session to the long break
+                sessionType = .longBreak
+            } else {
+                // Rewind from the start of a Pomodoro session to the short break
+                sessionType = .shortBreak
             }
-
-            timeRemaining = duration(for: sessionType)
+            completedPomodoros -= 1
+        } else if sessionType == .shortBreak || sessionType == .longBreak {
+            // Rewind from a break to the previous Pomodoro session
+            sessionType = .pomodoro
         }
+
+        timeRemaining = duration(for: sessionType)
+    }
 }
