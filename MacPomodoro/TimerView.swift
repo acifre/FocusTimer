@@ -34,9 +34,11 @@ struct TimerView: View {
                         .padding()
                         .focused($isFocused)
                 } else {
-                    Text(intent)
+                    Text(pomodoroTimer.sessionType != .pomodoro ? "Break Time!" : intent)
                         .font(.largeTitle)
                         .fontWeight(.bold)
+                        .animation(.smooth, value: pomodoroTimer.sessionType)
+//                            .easeIn(duration: 0.3), value: pomodoroTimer.sessionType)
                         .transition(.asymmetric(insertion: .scale, removal: .opacity))
                         .onTapGesture {
                         withAnimation {
@@ -78,7 +80,7 @@ struct TimerView: View {
             }
 
             #if os(macOS)
-                    .scaleEffect(x: 1.25, y: 1.25, anchor: .center)
+                .scaleEffect(x: 1.25, y: 1.25, anchor: .center)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background()
             #endif

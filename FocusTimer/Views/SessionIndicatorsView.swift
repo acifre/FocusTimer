@@ -15,7 +15,7 @@ struct SessionIndicatorsView: View {
         HStack(spacing: 5) {
             ForEach(0..<4, id: \.self) { index in
                 Circle()
-                    .fill(index < pomodoroTimer.completedPomodoros ? Color.blue : Color.gray)
+                    .fill(index < pomodoroTimer.completedPomodoros ? pomodoroTimer.currentColor : Color.gray)
                     .frame(width: 7.5, height: 7.5)
                     .if(pomodoroTimer.sessionType == .pomodoro && index == pomodoroTimer.completedPomodoros && pomodoroTimer.isTimerRunning) { view in
                         view.modifier(Glow(shape: Circle(), lineWidth: 1.5))

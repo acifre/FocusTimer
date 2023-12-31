@@ -22,7 +22,7 @@ struct ProgressCircleView: View {
                 // Blue progress circle
                 Circle()
                     .trim(from: 0.0, to: min(pomodoroTimer.progress, 1.0))
-                    .stroke(Color.blue, style: StrokeStyle(lineWidth: pomodoroTimer.isTimerRunning ? geometry.size.width * 0.08 : geometry.size.width * 0.06, lineCap: .butt, lineJoin: .miter))
+                    .stroke(pomodoroTimer.currentColor, style: StrokeStyle(lineWidth: pomodoroTimer.isTimerRunning ? geometry.size.width * 0.08 : geometry.size.width * 0.06, lineCap: .butt, lineJoin: .miter))
                     .rotationEffect(Angle(degrees: -90))
                     .shadow(radius: 2)
                     .animation(.easeOut(duration: 0.5), value: pomodoroTimer.isTimerRunning)

@@ -37,8 +37,10 @@ struct FocusTimerApp: App {
             }
                 .preferredColorScheme(.dark)
         }
+        #if os(macOS)
         .defaultSize(width: 700, height: 700)
         .windowResizability(.contentSize).windowStyle(HiddenTitleBarWindowStyle())
+        #endif
     }
     func requestNotificationPermission() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in

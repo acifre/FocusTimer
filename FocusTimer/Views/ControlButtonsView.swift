@@ -11,8 +11,8 @@ struct ControlButtonsView: View {
     @EnvironmentObject var pomodoroTimer: PomodoroTimer
     @Binding var intent: String
     @Binding var isEditing: Bool
-//    @Binding var isDisabled: Bool
 
+    
     var body: some View {
         HStack(spacing: 15) {
             // Your buttons here (Start/Pause, Skip, Reset, etc.)
@@ -36,7 +36,7 @@ struct ControlButtonsView: View {
             }
                 .buttonStyle(ControlButtonStyle())
                 .font(pomodoroTimer.isTimerRunning ? .largeTitle : .title2)
-                .foregroundStyle(pomodoroTimer.isTimerRunning ? .blue : .white)
+                .foregroundStyle(pomodoroTimer.isTimerRunning ? pomodoroTimer.currentColor : .white)
                 .animation(.easeInOut(duration: 0.5), value: pomodoroTimer.isTimerRunning)
 //                .if(pomodoroTimer.isTimerRunning) { view in
 //                    view.modifier(Glow(shape: RoundedRectangle(cornerRadius: 20), lineWidth: 2)) }
