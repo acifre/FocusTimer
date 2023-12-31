@@ -11,6 +11,7 @@ struct TimerView: View {
     @EnvironmentObject var pomodoroTimer: PomodoroTimer
     @State private var intent = ""
     @State private var isEditing = true
+//    @State private var isDisabled = true
 
     @FocusState private var isFocused: Bool
 
@@ -21,6 +22,7 @@ struct TimerView: View {
                     TextField("Intention?", text: $intent, onCommit: {
                         withAnimation {
                             isEditing = false
+//                            isDisabled = false
 
                             if !pomodoroTimer.isTimerRunning {
                                 pomodoroTimer.toggleTimer()
@@ -49,6 +51,11 @@ struct TimerView: View {
                     ProgressCircleView()
                         .padding(pomodoroTimer.isTimerRunning ? 10 : 20)
                         .frame(width: 250, height: 250)
+                        .if(pomodoroTimer.isTimerRunning) { view in
+                            withAnimation {
+                                view.glow()
+                            }
+                        }
 
                     VStack {
 
@@ -65,7 +72,7 @@ struct TimerView: View {
                 ControlButtonsView(intent: $intent, isEditing: $isEditing)
 
             }
-            .animation(.easeInOut(duration: 0.5), value: pomodoroTimer.isTimerRunning)
+                .animation(.easeInOut(duration: 0.5), value: pomodoroTimer.isTimerRunning)
                 .onAppear {
                 isFocused = true
             }
@@ -73,7 +80,8 @@ struct TimerView: View {
             #if os(macOS)
                 .frame(width: 500.0, height: 700.0)
                 .background()
-                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .ignoresSafeArea()
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
                     .scaleEffect(x: 1.25, y: 1.25, anchor: .center)
             #endif
         }

@@ -33,7 +33,7 @@ class PomodoroTimer: ObservableObject {
     init() {
         self.sessionType = .pomodoro
         self.completedPomodoros = 0
-        self.timeRemaining = 1 * 60 // Directly initializing with Pomodoro duration
+        self.timeRemaining = 25 * 60 // Directly initializing with Pomodoro duration
         self.intent = ""
     }
 
@@ -105,11 +105,11 @@ class PomodoroTimer: ObservableObject {
     func duration(for session: SessionType) -> Int {
         switch session {
         case .pomodoro:
-            return 1 * 60 // 25 minutes
+            return 25 * 60 // 25 minutes
         case .shortBreak:
-            return 1 * 60 // 5 minutes
+            return 5 * 60 // 5 minutes
         case .longBreak:
-            return 1 * 60 // 15 minutes
+            return 15 * 60 // 15 minutes
         }
     }
 

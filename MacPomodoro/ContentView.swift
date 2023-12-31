@@ -28,9 +28,11 @@ struct ContentView: View {
                     }
             }
             .frame(minWidth: 700, minHeight: 500)
+
 //            TimerView()
 
         }
+
         .navigationTitle("Focus Timer")
 
     }

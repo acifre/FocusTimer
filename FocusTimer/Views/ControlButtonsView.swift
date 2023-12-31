@@ -11,6 +11,7 @@ struct ControlButtonsView: View {
     @EnvironmentObject var pomodoroTimer: PomodoroTimer
     @Binding var intent: String
     @Binding var isEditing: Bool
+//    @Binding var isDisabled: Bool
 
     var body: some View {
         HStack(spacing: 15) {
@@ -45,6 +46,7 @@ struct ControlButtonsView: View {
         }
         .font(.title3)
         .animation(.easeInOut(duration: 0.5), value: pomodoroTimer.isTimerRunning)
+//        .disabled(isDisabled)
     }
 }
 
