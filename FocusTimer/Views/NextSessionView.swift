@@ -12,7 +12,7 @@ struct NextSessionView: View {
 
     var body: some View {
         Text("Next Up: \(pomodoroTimer.nextSessionText)")
-            .font(.headline)
+            .font(.subheadline)
     }
 }
 

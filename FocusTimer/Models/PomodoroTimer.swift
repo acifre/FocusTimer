@@ -7,7 +7,9 @@
 import Foundation
 import UserNotifications
 import AudioToolbox
+#if os(macOS)
 import AppKit
+#endif
 
 
 class PomodoroTimer: ObservableObject {
@@ -20,6 +22,8 @@ class PomodoroTimer: ObservableObject {
     @Published var timeRemaining: Int
     @Published var isTimerRunning = false
     @Published var completedPomodoros: Int
+    @Published var intent: String
+    @Published var isEditing = false
 
     var timer: Timer?
     var sessionType: SessionType
@@ -30,6 +34,7 @@ class PomodoroTimer: ObservableObject {
         self.sessionType = .pomodoro
         self.completedPomodoros = 0
         self.timeRemaining = 1 * 60 // Directly initializing with Pomodoro duration
+        self.intent = ""
     }
 
     var progress: CGFloat {
@@ -200,18 +205,39 @@ class PomodoroTimer: ObservableObject {
         }
     }
 
-    private func scheduleNotification(for sessionType: SessionType, at date: Date) {
-        let content = UNMutableNotificationContent()
-        content.title = sessionType == .pomodoro ? "Pomodoro Finished" : "Break Finished"
-        content.body = "Your \(sessionType == .pomodoro ? "Pomodoro" : "Break") session has ended."
-        content.sound = UNNotificationSound.default
+//    private func scheduleNotification(for sessionType: SessionType, at date: Date) {
+//        let content = UNMutableNotificationContent()
+//        content.title = sessionType == .pomodoro ? "Pomodoro Finished" : "Break Finished"
+//        content.body = "Your \(sessionType == .pomodoro ? "Pomodoro" : "Break") session has ended."
+//        content.sound = UNNotificationSound.default
+//
+//        let triggerDate = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
+//        let trigger = UNCalendarNotificationTrigger(dateMatching: triggerDate, repeats: false)
+//        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+//
+//        UNUserNotificationCenter.current().add(request)
+//    }
 
-        let triggerDate = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
-        let trigger = UNCalendarNotificationTrigger(dateMatching: triggerDate, repeats: false)
-        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+//    #if os(macOS)
 
-        UNUserNotificationCenter.current().add(request)
-    }
+    func scheduleNotification(for sessionType: SessionType, at date: Date) {
+            let content = UNMutableNotificationContent()
+            content.title = sessionType == .pomodoro ? "Pomodoro Finished" : "Break Finished"
+            content.body = "Your \(sessionType == .pomodoro ? "Pomodoro" : "Break") session has ended."
+            content.sound = UNNotificationSound.default
+
+            let interval = date.timeIntervalSinceNow
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(interval, 1), repeats: false)
+            let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+
+            UNUserNotificationCenter.current().add(request) { error in
+                if let error = error {
+                    // Handle any errors.
+                    print("Error: \(error)")
+                }
+            }
+        }
+//    #endif
 
     private func scheduleCurrentSessionNotification() {
         let sessionEndTime = Date().addingTimeInterval(Double(timeRemaining))
@@ -276,3 +302,5 @@ class PomodoroTimer: ObservableObject {
     }
 
 }
+
+

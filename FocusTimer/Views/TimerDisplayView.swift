@@ -13,8 +13,11 @@ struct TimerDisplayView: View {
     var body: some View {
         Text(pomodoroTimer.timeFormatted())
             .font(.largeTitle)
+            .scaleEffect(pomodoroTimer.isTimerRunning ? 1.5 : 1.0)
             .fontWeight(.bold)
+            .animation(.easeInOut(duration: 0.5), value: pomodoroTimer.isTimerRunning)
     }
+
 }
 
 

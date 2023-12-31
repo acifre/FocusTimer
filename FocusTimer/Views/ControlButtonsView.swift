@@ -9,13 +9,20 @@ import SwiftUI
 
 struct ControlButtonsView: View {
     @EnvironmentObject var pomodoroTimer: PomodoroTimer
+    @Binding var intent: String
+    @Binding var isEditing: Bool
 
     var body: some View {
-        HStack(spacing: 20) {
+        HStack(spacing: 15) {
             // Your buttons here (Start/Pause, Skip, Reset, etc.)
             // Example:
-            Button(action: { pomodoroTimer.toggleTimer() }) {
-                Image(systemName: pomodoroTimer.isTimerRunning ? "pause.fill" : "play.fill")
+            Button(action: {
+                pomodoroTimer.resetSequence()
+                intent = ""
+                isEditing = true
+
+            }) {
+                Image(systemName: "stop.fill")
             }
                 .buttonStyle(ControlButtonStyle())
             // Add other buttons similarly
@@ -27,13 +34,17 @@ struct ControlButtonsView: View {
                 Image(systemName: pomodoroTimer.isTimerRunning ? "pause.fill" : "play.fill")
             }
                 .buttonStyle(ControlButtonStyle())
+                .font(pomodoroTimer.isTimerRunning ? .largeTitle : .title2)
+                .animation(.easeInOut(duration: 0.5), value: pomodoroTimer.isTimerRunning)
 
 
             Button(action: { pomodoroTimer.skipToNextSession() }) {
-                Image(systemName: "forward.fill")
+                Image(systemName: "forward.end.fill")
             }
                 .buttonStyle(ControlButtonStyle())
         }
+        .font(.title3)
+        .animation(.easeInOut(duration: 0.5), value: pomodoroTimer.isTimerRunning)
     }
 }
 
@@ -43,7 +54,7 @@ struct ControlButtonStyle: ButtonStyle {
         configuration.label
             .padding()
             .background(Color.gray.opacity(0.2))
-            .clipShape(Circle())
+            .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }
 

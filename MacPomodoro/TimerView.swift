@@ -9,35 +9,74 @@ import SwiftUI
 
 struct TimerView: View {
     @EnvironmentObject var pomodoroTimer: PomodoroTimer
+    @State private var intent = ""
+    @State private var isEditing = true
+
+    @FocusState private var isFocused: Bool
 
     var body: some View {
-//        GeometryReader { geometry in
-        VStack {
+        NavigationStack {
+            VStack(alignment: .center) {
+                if isEditing {
+                    TextField("Intention?", text: $intent, onCommit: {
+                        withAnimation {
+                            isEditing = false
 
-            ZStack {
-                ProgressCircleView(progress: pomodoroTimer.progress, isTimerRunning: $pomodoroTimer.isTimerRunning)
-                    .frame(width: 200, height: 200)
+                            if !pomodoroTimer.isTimerRunning {
+                                pomodoroTimer.toggleTimer()
+                            }
+                        }
+                    })
+                        .frame(width: 100.0)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .padding()
+                        .focused($isFocused)
+                } else {
+                    Text(intent)
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .transition(.asymmetric(insertion: .scale, removal: .opacity))
+                        .onTapGesture {
+                        withAnimation {
+                            isEditing = true
 
-                VStack {
-
-                    TimerDisplayView()
-
-                    NextSessionView()
+                        }
+                    }
+                        .focused($isFocused)
                 }
+
+                ZStack {
+                    ProgressCircleView()
+                        .padding(pomodoroTimer.isTimerRunning ? 10 : 20)
+                        .frame(width: 250, height: 250)
+
+                    VStack {
+
+                        SessionIndicatorsView()
+
+                        TimerDisplayView()
+                            .padding(.vertical, pomodoroTimer.isTimerRunning ? 15 : 7)
+                        NextSessionView()
+                    }
+                }
+                    .padding(.vertical, pomodoroTimer.isTimerRunning ? 12 : 10)
+
+
+                ControlButtonsView(intent: $intent, isEditing: $isEditing)
+
+            }
+            .animation(.easeInOut(duration: 0.5), value: pomodoroTimer.isTimerRunning)
+                .onAppear {
+                isFocused = true
             }
 
-            SessionIndicatorsView()
-                .padding(.vertical)
-
-            ControlButtonsView()
-
-            Button(action: {pomodoroTimer.resetSequence()}, label: {
-                Text("Reset")
-            })
-            .tint(.red)
-
+            #if os(macOS)
+                .frame(width: 500.0, height: 700.0)
+                .background()
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                    .scaleEffect(x: 1.25, y: 1.25, anchor: .center)
+            #endif
         }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -56,6 +95,17 @@ struct DynamicButtonStyle: ButtonStyle {
     }
 }
 
+#if os(macOS)
+
+    extension NSTextField {
+        open override var focusRingType: NSFocusRingType {
+            get { .none }
+            set { }
+        }
+    }
+#endif
+
 #Preview {
     TimerView()
+        .environmentObject(PomodoroTimer())
 }
