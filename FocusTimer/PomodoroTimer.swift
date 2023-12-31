@@ -7,6 +7,7 @@
 import Foundation
 import UserNotifications
 import AudioToolbox
+import AppKit
 
 
 class PomodoroTimer: ObservableObject {
@@ -28,7 +29,24 @@ class PomodoroTimer: ObservableObject {
     init() {
         self.sessionType = .pomodoro
         self.completedPomodoros = 0
-        self.timeRemaining = 25 * 60 // Directly initializing with Pomodoro duration
+        self.timeRemaining = 1 * 60 // Directly initializing with Pomodoro duration
+    }
+
+    var progress: CGFloat {
+        let totalDuration = CGFloat(duration(for: sessionType))
+        let remaining = CGFloat(timeRemaining)
+        return 1.0 - (remaining / totalDuration)
+    }
+
+    var nextSessionText: String {
+        switch sessionType {
+        case .pomodoro:
+            return completedPomodoros >= 3 ? "Finish" : "Break"
+        case .shortBreak:
+            return "Focus"
+        case .longBreak:
+            return "Another round?"
+        }
     }
 
     func applicationDidEnterBackground() {
@@ -82,11 +100,11 @@ class PomodoroTimer: ObservableObject {
     func duration(for session: SessionType) -> Int {
         switch session {
         case .pomodoro:
-            return 25 * 60 // 25 minutes
+            return 1 * 60 // 25 minutes
         case .shortBreak:
-            return 5 * 60 // 5 minutes
+            return 1 * 60 // 5 minutes
         case .longBreak:
-            return 15 * 60 // 15 minutes
+            return 1 * 60 // 15 minutes
         }
     }
 
@@ -201,31 +219,31 @@ class PomodoroTimer: ObservableObject {
     }
 
     private func scheduleRemainingNotifications() {
-            var nextSessionEndTime = backgroundEntryTime?.addingTimeInterval(Double(timeRemaining))
-            var nextSessionType = sessionType
-            var sessionsLeft = 4 - completedPomodoros
+        var nextSessionEndTime = backgroundEntryTime?.addingTimeInterval(Double(timeRemaining))
+        var nextSessionType = sessionType
+        var sessionsLeft = 4 - completedPomodoros
 
-            while sessionsLeft > 0 {
-                guard let endTime = nextSessionEndTime else { break }
+        while sessionsLeft > 0 {
+            guard let endTime = nextSessionEndTime else { break }
 
-                scheduleNotification(for: nextSessionType, at: endTime)
+            scheduleNotification(for: nextSessionType, at: endTime)
 
-                // Check if this is the final session
-                if sessionsLeft == 1 && nextSessionType == .pomodoro {
-                    let finalBreakType = SessionType.longBreak
-                    let finalBreakDuration = duration(for: finalBreakType)
-                    let finalBreakEndTime = endTime.addingTimeInterval(Double(finalBreakDuration))
-                    scheduleFinalNotification(at: finalBreakEndTime)
-                    break  // Exit after scheduling the final notification
-                }
-
-                // Prepare for the next session
-                nextSessionType = nextSessionType == .pomodoro ? .shortBreak : .pomodoro
-                let nextSessionDuration = duration(for: nextSessionType)
-                nextSessionEndTime = endTime.addingTimeInterval(Double(nextSessionDuration))
-                sessionsLeft -= (nextSessionType == .pomodoro) ? 1 : 0
+            // Check if this is the final session
+            if sessionsLeft == 1 && nextSessionType == .pomodoro {
+                let finalBreakType = SessionType.longBreak
+                let finalBreakDuration = duration(for: finalBreakType)
+                let finalBreakEndTime = endTime.addingTimeInterval(Double(finalBreakDuration))
+                scheduleFinalNotification(at: finalBreakEndTime)
+                break // Exit after scheduling the final notification
             }
+
+            // Prepare for the next session
+            nextSessionType = nextSessionType == .pomodoro ? .shortBreak : .pomodoro
+            let nextSessionDuration = duration(for: nextSessionType)
+            nextSessionEndTime = endTime.addingTimeInterval(Double(nextSessionDuration))
+            sessionsLeft -= (nextSessionType == .pomodoro) ? 1 : 0
         }
+    }
 
     private func scheduleFinalNotification(at date: Date) {
         let content = UNMutableNotificationContent()
@@ -247,7 +265,14 @@ class PomodoroTimer: ObservableObject {
     }
 
     private func playSound() {
+        #if os(iOS)
         let systemSoundID: SystemSoundID = 1005
         AudioServicesPlaySystemSound(systemSoundID)
+        #elseif os(macOS)
+        if let sound = NSSound(named: "Funk") {
+            sound.play()
+        }
+        #endif
     }
+
 }

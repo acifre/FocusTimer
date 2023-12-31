@@ -11,7 +11,7 @@ struct ContentView: View {
     @EnvironmentObject var pomodoroTimer: PomodoroTimer
 
     var body: some View {
-            TimerView(pomodoroTimer: pomodoroTimer)
+            TimerView()
             .padding()
         }
     }

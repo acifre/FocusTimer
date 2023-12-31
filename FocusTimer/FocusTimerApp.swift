@@ -6,11 +6,14 @@
 //
 
 import SwiftUI
+import UserNotifications
 
 @main
 struct FocusTimerApp: App {
     @Environment(\.scenePhase) var scenePhase
     @StateObject var pomodoroTimer = PomodoroTimer()
+
+//    #if !os(iOS)
 
     init() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
@@ -27,20 +30,23 @@ struct FocusTimerApp: App {
         }
     }
 
+//    #endif
+
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(pomodoroTimer)
+
                 .onChange(of: scenePhase) {
-                    switch scenePhase {
-                    case .background:
-                        pomodoroTimer.applicationDidEnterBackground()
-                    case .active:
-                        pomodoroTimer.applicationWillEnterForeground()
-                    default:
-                        break
-                    }
+                switch scenePhase {
+                case .background:
+                    pomodoroTimer.applicationDidEnterBackground()
+                case .active:
+                    pomodoroTimer.applicationWillEnterForeground()
+                default:
+                    break
                 }
+            }
                 .preferredColorScheme(.dark)
         }
     }

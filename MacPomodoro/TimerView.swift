@@ -1,8 +1,8 @@
 //
 //  TimerView.swift
-//  FocusTimer
+//  MacPomodoro
 //
-//  Created by Anthony Cifre on 12/29/23.
+//  Created by Anthony Cifre on 12/30/23.
 //
 
 import SwiftUI
@@ -31,6 +31,11 @@ struct TimerView: View {
 
             ControlButtonsView()
 
+            Button(action: {pomodoroTimer.resetSequence()}, label: {
+                Text("Reset")
+            })
+            .tint(.red)
+
         }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -51,7 +56,6 @@ struct DynamicButtonStyle: ButtonStyle {
     }
 }
 
-
-//#Preview {
-//    TimerView()
-//}
+#Preview {
+    TimerView()
+}
