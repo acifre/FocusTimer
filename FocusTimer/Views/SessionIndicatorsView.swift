@@ -11,39 +11,48 @@ struct SessionIndicatorsView: View {
     @EnvironmentObject var pomodoroTimer: PomodoroTimer
 
     var body: some View {
+
         HStack(spacing: 5) {
             ForEach(0..<4, id: \.self) { index in
                 Circle()
                     .fill(index < pomodoroTimer.completedPomodoros ? Color.blue : Color.gray)
-//                    .shadow(color: index < pomodoroTimer.completedPomodoros ? .white : .black , radius: 1, x: 0, y: 0)
                     .frame(width: 7.5, height: 7.5)
-                    .glow()
+                    .if(pomodoroTimer.sessionType == .pomodoro && index == pomodoroTimer.completedPomodoros && pomodoroTimer.isTimerRunning) { view in
+                        view.modifier(Glow(shape: Circle(), lineWidth: 1.5))
+                }
             }
         }
-        .animation(.easeInOut(duration: 0.5), value: pomodoroTimer.completedPomodoros)
     }
 }
 
-struct Glow: ViewModifier {
-    @Binding var throb: Bool
+
+
+struct Glow<S: Shape>: ViewModifier {
+    @State private var isAnimating = false
+    let shape: S
+    let lineWidth: CGFloat
+
     func body(content: Content) -> some View {
-        ZStack {
-            content.blur(radius: throb ? 15 : 5)
-                .animation(.easeOut(duration: 0.5).repeatForever(), value: throb)
-                .onAppear(perform: {
-                    throb.toggle()
-                })
-
-            content
-        }
+        content
+            .overlay(
+                shape
+                    .stroke(Color.blue, lineWidth: lineWidth)
+                    .scaleEffect(isAnimating ? 1.5 : 1)
+                    .opacity(isAnimating ? 0 : 1)
+                    .animation(Animation.easeInOut(duration: 1).repeatForever(autoreverses: true), value: isAnimating)
+                    .onAppear { self.isAnimating = true }
+            )
     }
 }
+
+
 
 extension View {
-    func glow() -> some View {
-        self.modifier(Glow(throb: .constant(true)))
+    func glow<S: Shape>(shape: S, lineWidth: CGFloat = 3) -> some View {
+        self.modifier(Glow(shape: shape, lineWidth: lineWidth))
     }
 }
+
 
 extension View {
     /// Applies the given transform if the given condition evaluates to `true`.

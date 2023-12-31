@@ -15,34 +15,10 @@ struct FocusTimerApp: App {
 
     private let notificationDelegate = NotificationDelegate()
 
-//    #if !os(iOS)
-
-//    init() {
-//        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
-//            if granted {
-//                // Permission was granted
-//                print("Notification permission granted.")
-//            } else {
-//                // Permission was denied or an error occurred
-//                print("Notification permission denied.")
-//                if let error = error {
-//                    print("Error: \(error.localizedDescription)")
-//                }
-//            }
-//        }
-//
-//        let notificationCenter = UNUserNotificationCenter.current();
-//    }
-
-//    #endif
-
-//    #if os(macOS)
         init() {
             requestNotificationPermission()
             UNUserNotificationCenter.current().delegate = notificationDelegate
         }
-
-//    #endif
 
     var body: some Scene {
         WindowGroup {
@@ -62,7 +38,7 @@ struct FocusTimerApp: App {
                 .preferredColorScheme(.dark)
         }
         .defaultSize(width: 700, height: 700)
-        .windowResizability(.contentSize)
+        .windowResizability(.contentSize).windowStyle(HiddenTitleBarWindowStyle())
     }
     func requestNotificationPermission() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in

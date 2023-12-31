@@ -36,7 +36,10 @@ struct ControlButtonsView: View {
             }
                 .buttonStyle(ControlButtonStyle())
                 .font(pomodoroTimer.isTimerRunning ? .largeTitle : .title2)
+                .foregroundStyle(pomodoroTimer.isTimerRunning ? .blue : .white)
                 .animation(.easeInOut(duration: 0.5), value: pomodoroTimer.isTimerRunning)
+//                .if(pomodoroTimer.isTimerRunning) { view in
+//                    view.modifier(Glow(shape: RoundedRectangle(cornerRadius: 20), lineWidth: 2)) }
 
 
             Button(action: { pomodoroTimer.skipToNextSession() }) {

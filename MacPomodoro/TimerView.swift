@@ -51,11 +51,11 @@ struct TimerView: View {
                     ProgressCircleView()
                         .padding(pomodoroTimer.isTimerRunning ? 10 : 20)
                         .frame(width: 250, height: 250)
-                        .if(pomodoroTimer.isTimerRunning) { view in
-                            withAnimation {
-                                view.glow()
-                            }
-                        }
+//                        .if(pomodoroTimer.isTimerRunning) { view in
+//                            withAnimation {
+//                                view.glow()
+//                            }
+//                        }
 
                     VStack {
 
@@ -78,11 +78,9 @@ struct TimerView: View {
             }
 
             #if os(macOS)
-                .frame(width: 500.0, height: 700.0)
-                .background()
-                .ignoresSafeArea()
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
                     .scaleEffect(x: 1.25, y: 1.25, anchor: .center)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background()
             #endif
         }
     }

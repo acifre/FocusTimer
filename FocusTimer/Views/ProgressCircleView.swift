@@ -27,7 +27,6 @@ struct ProgressCircleView: View {
                     .shadow(radius: 2)
                     .animation(.easeOut(duration: 0.5), value: pomodoroTimer.isTimerRunning)
 
-//                    .transition(.scale)
             }
             .animation(.easeOut(duration: 0.5), value: pomodoroTimer.progress)
         }

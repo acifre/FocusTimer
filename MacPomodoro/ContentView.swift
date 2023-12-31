@@ -17,21 +17,20 @@ struct ContentView: View {
                     .tabItem {
                         Label("Timer", systemImage: "timer")
                     }
-                Text("History")
-                    .tabItem {
-                        Label("History", systemImage: "clock")
-                    }
-
-                Text("Settings")
-                    .tabItem {
-                        Label("Settings", systemImage: "gearshape")
-                    }
+//                Text("History")
+//                    .tabItem {
+//                        Label("History", systemImage: "clock")
+//                    }
+//
+//                Text("Settings")
+//                    .tabItem {
+//                        Label("Settings", systemImage: "gearshape")
+//                    }
             }
-            .frame(minWidth: 700, minHeight: 500)
-
-//            TimerView()
+            .background()
 
         }
+        .background()
 
         .navigationTitle("Focus Timer")
 
